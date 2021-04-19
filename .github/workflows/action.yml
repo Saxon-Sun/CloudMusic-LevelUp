@@ -40,3 +40,9 @@ jobs:
           if [ ${PLAYLIST} ];then PLAYLIST_CMD="-l $PLAYLIST"; fi
           if [ ${TG_BOT_TOKEN} ] && [ ${TG_CHAT_ID} ];then TG_PUSH_CMD="-c $TG_CHAT_ID -t $TG_BOT_TOKEN"; fi
           python3 action.py ${PHONE} ${PASSWORD} -s ${SCKEY} ${TG_PUSH_CMD} ${PLAYLIST_CMD} -b ${BARK_KEY} -w ${WW_ID} -e ${APP_SECRETS} -a ${AGENT_ID}
+          
+      - name: Delete workflow runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          retain_days: 2
+          keep_minimum_runs: 3
