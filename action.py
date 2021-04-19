@@ -349,7 +349,7 @@ if __name__ == "__main__":
         handle_error(server_chan_push, "Server酱", info["sckey"][0], res_print)
     # Bark推送
     if info["bark_key"]:
-        handle_error(bark_push, "Bark", info["bark_key"][0], 1, res_print)
+        handle_error(bark_push, "Bark", info["bark_key"][0], 0, res_print)
     # Telegram推送
     if info["tg_bot_token"]:
         handle_error(telegram_push, "Telegram", info["tg_bot_token"][0],
