@@ -30,8 +30,8 @@ usage: action.py [-h] [-s [SCKEY [SCKEY ...]]] [-t [TG_BOT_TOKEN [TG_BOT_TOKEN .
                  phone password
 
 positional arguments:
-  phone                 Your Phone Number.
-  password              The MD5 value of the password.
+  phone                 List of Phone Number.
+  password              List of MD5 value of the password.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -69,7 +69,7 @@ optional arguments:
 
 ```shell
 # 必须添加-l指定参数
-python action.py 手机号 32位MD5密码加密值 -l 5173689994 4901511925
+python action.py [手机号列表] [32位MD5密码加密值列表] -l 5173689994 4901511925
 ```
 
 ### Server 酱 Turbo 版微信推送
@@ -89,13 +89,13 @@ python action.py 手机号 32位MD5密码加密值 -l 5173689994 4901511925
    用例：
 
    ```shell
-   python action.py 手机号 32位MD5密码加密值 -s [SendKey]
+   python action.py [手机号1],[手机号2] [32位MD5密码加密值1],[32位MD5密码加密值2] -s [SendKey]
    ```
 
    示例：
 
    ```shell
-   python action.py 10000000000 4******************************1 -s SSS111111T111112f3e421 -l 2133132 2311315 2434234
+   python action.py 10000000000,20000000000 4******************************1,3******************************2 -s SSS111111T111112f3e421 -l 2133132 2311315 2434234
    ```
 
    ![](README/image-20201113151600263.png)
@@ -136,11 +136,11 @@ python action.py 手机号 32位MD5密码加密值 -l 5173689994 4901511925
 
 ### 2. 创建 Secrets
 
-- 创建 PHONE，填入手机号（必填）
+- 创建 PHONE，填入手机号列表，以`,`分割（必填）
 
-- 创建 PASSWORD，填入 32 位 MD5 密码加密值，填写此项可不填 NOMD5_PASSWORD 项（与 NOMD5_PASSWORD 二选其一）
+- 创建 PASSWORD，填入 32 位 MD5 密码加密值列表，以`,`分割，填写此项可不填 NOMD5_PASSWORD 项（与 NOMD5_PASSWORD 二选其一）
 
-- 创建 NOMD5_PASSWORD，填入密码，会自动转换密码为 MD5 值，填写此项可不填 PASSWORD 项（与 PASSWORD 二选其一）
+- 创建 NOMD5_PASSWORD，填入密码（不支持多个账号），会自动转换密码为 MD5 值，填写此项可不填 PASSWORD 项（与 PASSWORD 二选其一）
 
 - 创建 PLAYLIST，填入 歌单 ID，多个歌单 ID 用空格分隔（可选）
 
@@ -190,6 +190,8 @@ GitHub 现在有了手动执行的功能，点击下图 Run workflow 即可。
 
 ## 注意事项
 
+- 手机号列表和密码列表信息必须按顺序一一对应
+
 - 网易云音乐限制每天最多计算 300 首
 
 - 必须手动修改内容，不然不会自动执行！
@@ -197,3 +199,9 @@ GitHub 现在有了手动执行的功能，点击下图 Run workflow 即可。
 - 为了方便他人学习研究，脚本保留了网易云音乐完整的表单加密算法
 
 - Server 酱的应用场景取决于个人，请跟据自己的需求选择消息通道并进行配置，如在使用和配置方面有疑问，可以提出 Issue 或直接联系 Server Chan 管理员
+
+## TODO
+
+- 脚本携带的参数过多，实现方式过于愚蠢，之后会考虑使用 yaml 配置文件代替
+
+- 脚本功能太少，今后考虑开发比较实用的新功能
