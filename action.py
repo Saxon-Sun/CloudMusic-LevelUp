@@ -347,7 +347,7 @@ def task(info, phone, password):
                          res_print)
         # Bark 推送
         if info["bark_key"]:
-            handle_error(bark_push, "Bark", info["bark_key"][0], 1, res_print)
+            handle_error(bark_push, "Bark", info["bark_key"][0], 0, res_print)
         # Telegram 推送
         if info["tg_bot_token"]:
             handle_error(telegram_push, "Telegram", info["tg_bot_token"][0],
