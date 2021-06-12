@@ -40,3 +40,9 @@ jobs:
           if [[ ${WECOM_KEY} ]];then WECOM_CMD="-w $WECOM_KEY"; fi
           if [ ${PUSH_PLUS_KEY} ];then PUSH_PLUS_CMD="-p $PUSH_PLUS_KEY"; fi
           python3 action.py ${PHONE} ${PASSWORD} ${SC_CMD} ${TG_BOT_CMD} ${BARK_CMD} ${WECOM_CMD} ${PUSH_PLUS_CMD}
+          
+      - name: Delete workflow runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          retain_days: 2
+          keep_minimum_runs: 3
