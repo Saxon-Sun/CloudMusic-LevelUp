@@ -267,9 +267,11 @@ class CloudMusic:
             )
             ret = json.loads(res.text)
             random.seed(datetime.datetime.now())  # Random
-            musics.extend(
-                random.sample([i["id"] for i in ret["playlist"]["trackIds"]], amount),
-            )
+            track_ids = [i["id"] for i in ret["playlist"]["trackIds"]]
+            if len(track_ids) > amount:
+                musics.extend(random.sample(track_ids, amount))
+            else:
+                musics.extend(track_ids)
         return musics
 
     def task(self):
@@ -327,14 +329,14 @@ def run_task(info, phone, password):
     res_m_sign = app.sign(1)
     print(res_m_sign, end="\n\n")
     # Music Task
-    res_tasks = "刷听歌量失败"
+    res_task = "刷听歌量失败"
     for i in range(1):
         res_task = app.task()
         print(res_task)
     print(30 * "=")
     try:
         # Push
-        push = Push(res_login + "\n\n" + res_sign + "\n\n" + res_m_sign + "\n\n" + res_tasks)
+        push = Push(res_login + "\n\n" + res_sign + "\n\n" + res_m_sign + "\n\n" + res_task)
         # ServerChan
         if info["sc_key"]:
             push.server_chan_push(info["sc_key"])
