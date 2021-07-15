@@ -7,20 +7,18 @@
 @VERSION :   2.6
 """
 
-import datetime
 import os
 import requests
 import base64
-import sys
 import binascii
 import argparse
-import random
 import hashlib
 from Crypto.Cipher import AES
 import json
 
 
 # Get the arguments input.
+# 用于获取命令行参数并返回dict
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("phone", help="Your Phone Number.")
@@ -44,12 +42,14 @@ def get_args():
 
 
 # Calculate the MD5 value of text
+# 计算字符串的32位小写MD5值
 def calc_md5(text):
     md5_text = hashlib.md5(text.encode(encoding="utf-8")).hexdigest()
     return md5_text
 
 
 # AES Encrypt
+# 用于进行AES加密操作
 def aes_encrypt(text, sec_key):
     pad = 16 - len(text) % 16
     text = text + pad * chr(pad)
@@ -60,18 +60,43 @@ def aes_encrypt(text, sec_key):
 
 
 # RSA Encrypt
+# 用于进行RSA加密
 def rsa_encrypt(text, pub_key, modulus):
     text = text[::-1]
     rs = int(text.encode("utf-8").hex(), 16) ** int(pub_key, 16) % int(modulus, 16)
     return format(rs, "x").zfill(256)
 
 
+# 推送类，包含所有推送函数
 class Push:
-    def __init__(self, text):
+    def __init__(self, text, args):
         self.text = text
+        self.info = args
+
+    # 执行指定的推送流程
+    def do(self):
+        try:
+            # ServerChan
+            if self.info["sc_key"]:
+                self.server_chan_push()
+            # Bark
+            if self.info["bark_key"]:
+                self.bark_push()
+            # Telegram
+            if self.info["tg_bot_key"]:
+                self.telegram_push()
+            # pushplus
+            if self.info["push_plus_key"]:
+                self.push_plus_push()
+            # 企业微信
+            if self.info["wecom_key"]:
+                self.wecom_id_push()
+        except Exception as err:
+            print(err)
 
     # Server Chan Turbo Push
-    def server_chan_push(self, arg):
+    def server_chan_push(self):
+        arg = self.info["sc_key"]
         url = "https://sctapi.ftqq.com/{0}.send".format(arg[0])
         headers = {"Content-type": "application/x-www-form-urlencoded"}
         content = {"title": "网易云打卡", "desp": self.text}
@@ -79,7 +104,8 @@ class Push:
         print("ServerChan: " + ret.text)
 
     # Telegram Bot Push
-    def telegram_push(self, arg):
+    def telegram_push(self):
+        arg = self.info["tg_bot_key"]
         url = "https://api.telegram.org/bot{0}/sendMessage".format(arg[0])
         data = {
             "chat_id": arg[1],
@@ -89,7 +115,8 @@ class Push:
         print("Telegram: " + ret.text)
 
     # Bark Push
-    def bark_push(self, arg):
+    def bark_push(self):
+        arg = self.info["bark_key"]
         data = {"title": "网易云打卡", "body": self.text}
         headers = {"Content-Type": "application/json;charset=utf-8"}
         url = "https://api.day.app/{0}/?isArchive={1}".format(arg[0], arg[1])
@@ -97,7 +124,8 @@ class Push:
         print("Bark: " + ret.text)
 
     # PushPlus Push
-    def push_plus_push(self, arg):
+    def push_plus_push(self):
+        arg = self.info["push_plus_key"]
         url = "http://www.pushplus.plus/send?token={0}&title={1}&content={2}&template={3}".format(
             arg[0], "网易云打卡", self.text, "html"
         )
@@ -105,7 +133,8 @@ class Push:
         print("pushplus: " + ret.text)
 
     # Wecom Push
-    def wecom_id_push(self, arg):
+    def wecom_id_push(self):
+        arg = self.info["wecom_key"]
         body = {
             "touser": "@all",
             "msgtype": "text",
@@ -130,6 +159,7 @@ class Push:
             print("Wecom: " + ret)
 
 
+# 加密类，实现网易云音乐前端加密流程
 class Encrypt:
     def __init__(self):
         self.modulus = (
@@ -148,6 +178,7 @@ class Encrypt:
         return {"params": enc_text, "encSecKey": enc_sec_key}
 
 
+# 网易云音乐类，实现脚本基础流程
 class CloudMusic:
     def __init__(self, phone, country_code, password):
         self.session = requests.Session()
@@ -167,6 +198,7 @@ class CloudMusic:
             "Accept-Encoding": "gzip, deflate",
         }
 
+    # 登录流程
     def login(self):
         login_url = "https://music.163.com/weapi/login/cellphone"
         headers = {
@@ -195,12 +227,14 @@ class CloudMusic:
         return text
 
     # Get the level of account.
+    # 获取用户的等级信息等
     def get_level(self):
         url = "https://music.163.com/weapi/user/level?csrf_token=" + self.csrf
         res = self.session.post(url=url, data=self.login_data, headers=self.headers)
         ret = json.loads(res.text)
         return ret["data"]
 
+    # 执行用户的签到流程
     def sign(self, tp=0):
         sign_url = "https://music.163.com/weapi/point/dailyTask?{csrf}".format(csrf=self.csrf)
         res = self.session.post(url=sign_url, data=self.enc.encrypt('{{"type":{0}}}'.format(tp)), headers=self.headers)
@@ -214,6 +248,7 @@ class CloudMusic:
             text = "签到失败 " + str(ret["code"]) + "：" + ret["message"]
         return text
 
+    # 获取用户的推荐歌单
     def get_recommend_playlists(self):
         recommend_url = "https://music.163.com/weapi/v1/discovery/recommend/resource"
         res = self.session.post(
@@ -227,6 +262,7 @@ class CloudMusic:
             print("获取推荐歌曲失败 " + str(ret["code"]) + "：" + ret["message"])
         return playlists
 
+    # 获取用户的收藏歌单
     def get_subscribe_playlists(self):
         private_url = "https://music.163.com/weapi/user/playlist?csrf_token=" + self.csrf
         res = self.session.post(
@@ -244,10 +280,11 @@ class CloudMusic:
             print("个人订阅歌单获取失败 " + str(ret["code"]) + "：" + ret["message"])
         return subscribed_lists
 
-    def get_musics(self):
+    # 获取某一歌单内的所有音乐ID
+    def get_list_musics(self, mlist):
         detail_url = "https://music.163.com/weapi/v6/playlist/detail?csrf_token=" + self.csrf
         musics = []
-        for m in self.get_recommend_playlists():
+        for m in mlist:
             res = self.session.post(
                 url=detail_url,
                 data=self.enc.encrypt(json.dumps({"id": m, "n": 1000, "csrf_token": self.csrf})),
@@ -255,25 +292,18 @@ class CloudMusic:
             )
             ret = json.loads(res.text)
             musics.extend([i["id"] for i in ret["playlist"]["trackIds"]])
-        amount = 320 - len(musics)
-        if amount <= 0:
-            musics = random.sample(musics, 320)
-            amount = 200
-        for m in self.get_subscribe_playlists():
-            res = self.session.post(
-                url=detail_url,
-                data=self.enc.encrypt(json.dumps({"id": m, "n": 1000, "csrf_token": self.csrf})),
-                headers=self.headers,
-            )
-            ret = json.loads(res.text)
-            random.seed(datetime.datetime.now())  # Random
-            track_ids = [i["id"] for i in ret["playlist"]["trackIds"]]
-            if len(track_ids) > amount:
-                musics.extend(random.sample(track_ids, amount))
-            else:
-                musics.extend(track_ids)
         return musics
 
+    # 获取任务歌单池内的所有音乐ID
+    def get_task_musics(self):
+        musics = []
+        recommend_musics = self.get_list_musics(self.get_recommend_playlists())
+        subscribe_musics = self.get_list_musics(self.get_subscribe_playlists())
+        musics.extend(recommend_musics[:320] if len(recommend_musics) > 320 else recommend_musics)
+        musics.extend(subscribe_musics[:200] if len(subscribe_musics) > 200 else subscribe_musics)
+        return musics
+
+    # 任务
     def task(self):
         feedback_url = "http://music.163.com/weapi/feedback/weblog"
         post_data = json.dumps(
@@ -293,7 +323,7 @@ class CloudMusic:
                                     "wifi": 0,
                                 },
                             },
-                            self.get_musics(),
+                            self.get_task_musics(),
                         )
                     )
                 )
@@ -308,24 +338,25 @@ class CloudMusic:
         return text
 
 
+# 执行任务，传递参数，推送结果
 def run_task(info, phone, password):
-    # Start
     country_code = "86"
     if "+" in phone:
         country_code = str(phone).split("+")[0]
         phone = str(phone).split("+")[1]
+    # 初始化
     app = CloudMusic(phone, country_code, password)
-    # Login
+    # 登录
     res_login = app.login()
     print(res_login, end="\n\n")
     if "400" in res_login:
         print(res_login)
         print(30 * "=")
         return
-    # Sign In
+    # PC/Web端签到
     res_sign = app.sign()
     print(res_sign, end="\n\n")
-    # Mobile Sign In
+    # 安卓端签到
     res_m_sign = app.sign(1)
     print(res_m_sign, end="\n\n")
     # Music Task
@@ -334,30 +365,14 @@ def run_task(info, phone, password):
         res_task = app.task()
         print(res_task)
     print(30 * "=")
-    try:
-        # Push
-        push = Push(res_login + "\n\n" + res_sign + "\n\n" + res_m_sign + "\n\n" + res_task)
-        # ServerChan
-        if info["sc_key"]:
-            push.server_chan_push(info["sc_key"])
-        # Bark
-        if info["bark_key"]:
-            push.bark_push(info["bark_key"])
-        # Telegram
-        if info["tg_bot_key"]:
-            push.telegram_push(info["tg_bot_key"])
-        # pushplus
-        if info["push_plus_key"]:
-            push.push_plus_push(info["push_plus_key"])
-        # 企业微信
-        if info["wecom_key"]:
-            push.wecom_id_push(info["wecom_key"])
-    except Exception as err:
-        print(err)
+    # 推送
+    message = res_login + "\n\n" + res_sign + "\n\n" + res_m_sign + "\n\n" + res_task
+    Push(message, info).do()
     print(30 * "=")
 
 
-def task_pool(infos):
+# 执行多个任务
+def tasks_pool(infos):
     phone_list = infos["phone"].split(",")
     passwd_list = infos["password"].split(",")
     # Run tasks
@@ -373,4 +388,4 @@ def task_pool(infos):
 
 if __name__ == "__main__":
     # Get arguments
-    task_pool(get_args())
+    tasks_pool(get_args())

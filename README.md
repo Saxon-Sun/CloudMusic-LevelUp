@@ -1,16 +1,26 @@
 # CloudMusic-LevelUp
 
-> 网易云音乐刷歌升级脚本，欢迎提 issue 和 PR 帮助增强脚本功能。
+> 网易云音乐刷歌升级脚本
+> 
+> 由于个人维护精力有限，欢迎提 issue 和 PR 来帮助增强脚本功能。
 >
 > [项目 GitHub 地址](https://github.com/Secriy/CloudMusic-LevelUp)
 
 ## 脚本功能
 
 1. 登录网易云音乐
-2. 执行签到，并显示奖励的积分数值
-3. 刷音乐播放量，返回具体数值
-4. 使用 GitHub Actions 部署脚本
-5. 支持腾讯云函数部署脚本
+2. 支持多账号登录
+3. 支持多端签到，并显示奖励的积分数值
+4. 刷音乐播放量
+5. 支持本地命令行执行
+6. 支持 GitHub Actions 部署
+7. 支持腾讯云函数部署
+8. 支持多种推送方式
+   - Server 酱
+   - Telegram Bot
+   - Bark
+   - pushplus
+   - 企业微信
 
 ## 使用方式
 
